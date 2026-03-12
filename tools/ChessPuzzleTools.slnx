@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ChessPuzzle.Core/ChessPuzzle.Core.csproj" />
+  <Project Path="ChessPuzzle.Evaluator.Cli/ChessPuzzle.Evaluator.Cli.csproj" />
+  <Project Path="ChessPuzzle.Evaluator.Tests/ChessPuzzle.Evaluator.Tests.csproj" />
+  <Project Path="ChessPuzzle.Evaluator/ChessPuzzle.Evaluator.csproj" />
+</Solution>
