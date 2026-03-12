@@ -7,7 +7,7 @@ import { validateSolution } from './validation.js'
 
 // --- Init ---
 
-const puzzle = await loadPuzzle('puzzles/puzzle-001.json')
+const puzzle = await loadPuzzle('puzzles/puzzle-002.json')
 const gameState = new GameState(puzzle)
 
 // Update page title

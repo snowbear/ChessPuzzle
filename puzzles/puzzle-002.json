@@ -1,0 +1,45 @@
+{
+    "metadata": {
+        "id": "puzzle-002",
+        "title": "Legal's Sacrifice",
+        "author": "System",
+        "difficulty": 4
+    },
+    "startPosition": {
+        "fen": "rn1qkbnr/ppp2p1p/3p2p1/4p3/2B1P1b1/2N2N2/PPPP1PPP/R1BQK2R w KQkq - 0 5",
+        "squares": {
+            "c4": "open",
+            "c3": "open",
+            "f3": "open",
+            "g4": "open"
+        }
+    },
+    "pieceConstraints": {
+        "white": {
+            "knight": { "min": 2, "max": 2 },
+            "bishop": { "min": 1, "max": 1 }
+        },
+        "black": {
+            "bishop": { "min": 1, "max": 1 }
+        }
+    },
+    "halfMoveCount": 5,
+    "revealedFinalPosition": "3q1b2/4kB2/8/3NN3/8/8/8/3bK3 w - - 0 1",
+    "hints": [
+        {
+            "scope": "any",
+            "constraints": { "piece": "knight", "isCapture": true, "capturedPiece": "pawn" },
+            "text": "A knight captures a pawn"
+        },
+        {
+            "scope": "any",
+            "constraints": { "piece": "bishop", "isCapture": true, "isCheck": true },
+            "text": "A bishop captures with check"
+        },
+        {
+            "scope": "final",
+            "constraints": { "isCheckmate": true },
+            "text": "The sequence ends in checkmate"
+        }
+    ]
+}
