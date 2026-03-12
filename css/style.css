@@ -76,3 +76,18 @@ body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #eee; }
 }
 #thumbnail-container h3 { font-size: 0.85rem; margin-bottom: 0.3rem; text-align: center; }
 #thumbnail-board { width: 180px; height: 180px; }
+
+.tray-color-section { margin-bottom: 0.75rem; }
+.tray-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.tray-item:hover { background: #333; }
+.tray-item.selected { background: #4ecca3; color: #000; }
+.tray-item.exhausted { opacity: 0.3; cursor: default; }
+.tray-piece { font-size: 1.5rem; }
+.tray-count { font-size: 0.75rem; }
