@@ -1,4 +1,4 @@
-import { Chessboard, COLOR, INPUT_EVENT_TYPE, POINTER_EVENTS, FEN } from
+import { Chessboard, COLOR, INPUT_EVENT_TYPE, FEN } from
     '../node_modules/cm-chessboard/src/Chessboard.js'
 import { Markers, MARKER_TYPE } from
     '../node_modules/cm-chessboard/src/extensions/markers/Markers.js'
@@ -69,28 +69,40 @@ export class BoardView {
     }
 
     /**
-     * Enable click-on-empty-square detection using cm-chessboard's
-     * built-in enableSquareSelect API. Fires onSquareClick for squares
-     * that have no piece (empty squares the user can place pieces on).
+     * Enable click-on-square detection for piece placement.
+     * Uses a custom pointerdown handler that walks up the DOM to find
+     * the data-square attribute (needed because marker overlays may
+     * intercept clicks before reaching the square rect).
      */
     enableSquareSelect() {
         if (this._squareSelectEnabled) return
         this._squareSelectEnabled = true
-        this.board.enableSquareSelect(POINTER_EVENTS.pointerdown, (event) => {
-            const square = event.square
+        const container = document.getElementById(this.elementId)
+        this._squareClickHandler = (e) => {
+            // Walk up DOM to find element with data-square
+            let el = e.target
+            let square = null
+            while (el && el !== container) {
+                square = el.getAttribute && el.getAttribute('data-square')
+                if (square) break
+                el = el.parentElement
+            }
             if (!square) return
             // Only fire for empty squares (no piece present)
             const piece = this.board.getPiece(square)
             if (!piece && this.onSquareClick) {
                 this.onSquareClick(square)
             }
-        })
+        }
+        container.addEventListener('pointerdown', this._squareClickHandler)
     }
 
     disableSquareSelect() {
         if (!this._squareSelectEnabled) return
         this._squareSelectEnabled = false
-        this.board.disableSquareSelect(POINTER_EVENTS.pointerdown)
+        const container = document.getElementById(this.elementId)
+        container.removeEventListener('pointerdown', this._squareClickHandler)
+        this._squareClickHandler = null
     }
 
     addMarker(square, type = MARKER_TYPE.frame) {
