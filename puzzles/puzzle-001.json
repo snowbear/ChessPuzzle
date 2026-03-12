@@ -1,0 +1,37 @@
+{
+    "metadata": {
+        "id": "puzzle-001",
+        "title": "First Steps",
+        "author": "System",
+        "difficulty": 1
+    },
+    "startPosition": {
+        "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        "squares": {
+            "e2": "open",
+            "d2": "open"
+        }
+    },
+    "pieceConstraints": {
+        "white": {
+            "pawn": { "min": 1, "max": 2 }
+        }
+    },
+    "halfMoveCount": 2,
+    "revealedFinalPosition": {
+        "e4": { "color": "white", "type": "pawn" },
+        "d7": { "color": "black", "type": "pawn" }
+    },
+    "hints": [
+        {
+            "scope": { "halfMove": 1 },
+            "constraints": { "piece": "pawn" },
+            "text": "White moved a pawn on their first move"
+        },
+        {
+            "scope": { "halfMove": 2 },
+            "constraints": { "piece": "pawn" },
+            "text": "Black responded by moving a pawn"
+        }
+    ]
+}
