@@ -169,14 +169,8 @@ export class ThumbnailView {
         await new Promise(r => setTimeout(r, 100))
     }
 
-    showRevealedPosition(revealedFinalPosition) {
-        this.board.setPosition(FEN.empty, false)
-        const colorMap = { white: 'w', black: 'b' }
-        const typeMap = { pawn: 'p', knight: 'n', bishop: 'b', rook: 'r', queen: 'q', king: 'k' }
-        for (const [sq, piece] of Object.entries(revealedFinalPosition)) {
-            const cmPiece = toCmPiece(colorMap[piece.color], typeMap[piece.type])
-            this.board.setPiece(sq, cmPiece, false)
-        }
+    showRevealedPosition(fen) {
+        this.board.setPosition(fen, false)
     }
 
     markMismatches(squares) {

@@ -13,7 +13,7 @@ export class Puzzle {
         this.startPosition = data.startPosition
         this.pieceConstraints = data.pieceConstraints || {}
         this.halfMoveCount = data.halfMoveCount
-        this.revealedFinalPosition = data.revealedFinalPosition || {}
+        this.revealedFinalPosition = data.revealedFinalPosition || ''
         this.hints = data.hints || []
     }
 

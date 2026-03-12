@@ -1,7 +1,6 @@
 import { Chess } from '../node_modules/chess.js/dist/esm/chess.js'
 import { evaluateAllHints } from './hints.js'
 
-const PIECE_SHORT = { pawn: 'p', knight: 'n', bishop: 'b', rook: 'r', queen: 'q', king: 'k' }
 
 /**
  * Validate the player's solution.
@@ -30,13 +29,20 @@ export function validateSolution(gameState) {
     }
 
     const positionMismatches = []
-    for (const [sq, expected] of Object.entries(puzzle.revealedFinalPosition)) {
-        const actual = finalChess.get(sq)
-        const expectedColor = expected.color === 'white' ? 'w' : 'b'
-        const expectedType = PIECE_SHORT[expected.type] || expected.type
-
-        if (!actual || actual.color !== expectedColor || actual.type !== expectedType) {
-            positionMismatches.push(sq)
+    if (puzzle.revealedFinalPosition) {
+        const revealedChess = new Chess()
+        revealedChess.load(puzzle.revealedFinalPosition)
+        const files = 'abcdefgh'
+        for (let r = 1; r <= 8; r++) {
+            for (const f of files) {
+                const sq = f + r
+                const expected = revealedChess.get(sq)
+                if (!expected) continue
+                const actual = finalChess.get(sq)
+                if (!actual || actual.color !== expected.color || actual.type !== expected.type) {
+                    positionMismatches.push(sq)
+                }
+            }
         }
     }
 

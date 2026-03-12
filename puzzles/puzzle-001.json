@@ -19,11 +19,7 @@
         }
     },
     "halfMoveCount": 4,
-    "revealedFinalPosition": {
-        "d5": { "color": "white", "type": "bishop" },
-        "g8": { "color": "black", "type": "king" },
-        "f8": { "color": "black", "type": "rook" }
-    },
+    "revealedFinalPosition": "5rk1/8/8/3B4/8/8/8/8 w - - 0 1",
     "hints": [
         {
             "scope": { "halfMove": 1 },
