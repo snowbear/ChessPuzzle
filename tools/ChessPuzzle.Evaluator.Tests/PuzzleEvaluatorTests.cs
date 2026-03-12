@@ -56,9 +56,12 @@ public class PuzzleEvaluatorTests
 
         Assert.True(result.IsValid);
         Assert.Empty(result.Errors);
-        // Stub explorer returns 0 solutions, 0 search space
+        // Explorer now runs a real search; the test puzzle has HalfMoveCount=2
+        // from the starting position, so SearchSpaceSize > 0.
+        // The revealed final position shows only e4 played (1 half-move state),
+        // but the search plays 2 half-moves, so no sequence matches.
         Assert.Equal(0, result.SolutionCount);
-        Assert.Equal(0L, result.SearchSpaceSize);
+        Assert.True(result.SearchSpaceSize > 0, "SearchSpaceSize should be > 0 with real explorer");
         Assert.Equal(0.0, result.Complexity);
         Assert.Contains("No valid solutions found", result.Remarks);
     }
