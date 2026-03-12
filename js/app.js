@@ -70,13 +70,17 @@ refreshBoard()
 
 function handlePiecePickup(square) {
     if (gameState.isAtStartPosition()) {
-        // In placement phase: clicking a player-placed piece removes it
-        if (gameState.placedPieces[square]) {
+        // If a tray piece is selected, clicking a placed piece removes it
+        if (pieceTray.selectedPiece && gameState.placedPieces[square]) {
             gameState.removePlacedPiece(square)
             refreshBoard()
-            return false  // cancel the drag (piece is removed)
+            return false
         }
-        // Don't allow picking up revealed pieces in placement phase
+        // If no tray piece selected, allow normal piece movement (to make moves)
+        if (!pieceTray.selectedPiece) {
+            return true
+        }
+        // Tray piece selected but clicking a revealed piece — ignore
         return false
     } else {
         // In play phase: allow normal piece movement
@@ -109,9 +113,9 @@ function handleSquareClick(square) {
 }
 
 function handlePieceDrop(from, to) {
-    if (gameState.isAtStartPosition()) {
-        // Placement phase: place selected piece from tray onto open square
-        if (pieceTray.selectedPiece && puzzle.getOpenSquares().includes(to)) {
+    if (gameState.isAtStartPosition() && pieceTray.selectedPiece) {
+        // Placement mode: place selected tray piece onto open square
+        if (puzzle.getOpenSquares().includes(to)) {
             const { color, type } = pieceTray.selectedPiece
             const typeName = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }[type]
             const colorName = color === 'w' ? 'white' : 'black'
@@ -120,14 +124,14 @@ function handlePieceDrop(from, to) {
             const placed = (counts[colorName] && counts[colorName][typeName]) || 0
 
             if (placed < constraint.max) {
-                // Remove any existing placed piece on this square first
                 gameState.removePlacedPiece(to)
                 gameState.placePiece(to, { color, type })
                 refreshBoard()
             }
         }
-        return false  // always return false in placement (we handle board update manually)
+        return false
     } else {
+        // Play phase (or start position with no tray piece selected): make a move
         // Play phase: try to make a legal move
         const chess = gameState.getChessAtCurrentMove()
         const piece = chess.get(from)
@@ -188,7 +192,9 @@ function handleSubmit() {
 // --- Rendering ---
 
 function refreshBoard() {
-    boardView.setPosition(gameState.getCurrentFen(), true)
+    // No animation during placement to avoid flicker when placing pieces
+    const animate = !gameState.isAtStartPosition()
+    boardView.setPosition(gameState.getCurrentFen(), animate)
     boardView.clearMarkers()
 
     // Show square markers at starting position
@@ -201,15 +207,17 @@ function refreshBoard() {
 
     // Update phase indicator
     const phaseEl = document.getElementById('phase-indicator')
+    const validMoveCount = gameState.moves.filter(m => m.valid).length
+    const remaining = puzzle.halfMoveCount - validMoveCount
     if (gameState.isAtStartPosition()) {
         phaseEl.className = 'placement'
-        phaseEl.textContent = 'Place pieces on highlighted squares'
+        phaseEl.textContent = `Place pieces on highlighted squares | ${puzzle.halfMoveCount} half-moves to play`
+    } else if (remaining > 0) {
+        phaseEl.className = 'play'
+        phaseEl.textContent = `Move ${validMoveCount + 1} of ${puzzle.halfMoveCount} | ${remaining} half-move${remaining !== 1 ? 's' : ''} remaining`
     } else {
         phaseEl.className = 'play'
-        const remaining = puzzle.halfMoveCount - gameState.moves.filter(m => m.valid).length
-        phaseEl.textContent = remaining > 0
-            ? `Play moves (${remaining} half-move${remaining !== 1 ? 's' : ''} remaining)`
-            : 'All moves played \u2014 submit to check!'
+        phaseEl.textContent = `All ${puzzle.halfMoveCount} moves played \u2014 submit to check!`
     }
 
     // Update piece tray
