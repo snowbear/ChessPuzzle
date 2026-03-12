@@ -1,37 +1,49 @@
 {
     "metadata": {
         "id": "puzzle-001",
-        "title": "First Steps",
+        "title": "The Knight's Outpost",
         "author": "System",
-        "difficulty": 1
+        "difficulty": 2
     },
     "startPosition": {
-        "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+        "fen": "r2qk2r/pppb1ppp/2np1n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQR1K1 w kq - 0 7",
         "squares": {
-            "e2": "open",
-            "d2": "open"
+            "c3": "open",
+            "c4": "open"
         }
     },
     "pieceConstraints": {
         "white": {
-            "pawn": { "min": 1, "max": 2 }
+            "knight": { "min": 1, "max": 1 },
+            "bishop": { "min": 1, "max": 1 }
         }
     },
-    "halfMoveCount": 2,
+    "halfMoveCount": 4,
     "revealedFinalPosition": {
-        "e4": { "color": "white", "type": "pawn" },
-        "d7": { "color": "black", "type": "pawn" }
+        "d5": { "color": "white", "type": "bishop" },
+        "g8": { "color": "black", "type": "king" },
+        "f8": { "color": "black", "type": "rook" }
     },
     "hints": [
         {
             "scope": { "halfMove": 1 },
-            "constraints": { "piece": "pawn" },
-            "text": "White moved a pawn on their first move"
+            "constraints": { "piece": "knight", "toSquare": "d5" },
+            "text": "White opens with a knight jump to d5"
         },
         {
             "scope": { "halfMove": 2 },
-            "constraints": { "piece": "pawn" },
-            "text": "Black responded by moving a pawn"
+            "constraints": { "piece": "knight", "isCapture": true },
+            "text": "Black recaptures on d5 with a knight"
+        },
+        {
+            "scope": { "halfMove": 3 },
+            "constraints": { "piece": "bishop", "isCapture": true },
+            "text": "White recaptures with the bishop"
+        },
+        {
+            "scope": { "halfMove": 4 },
+            "constraints": { "isCastle": "kingside" },
+            "text": "Black castles kingside"
         }
     ]
 }

@@ -1,4 +1,4 @@
-import { Chessboard, COLOR, INPUT_EVENT_TYPE, FEN } from
+import { Chessboard, COLOR, INPUT_EVENT_TYPE, POINTER_EVENTS, FEN } from
     '../node_modules/cm-chessboard/src/Chessboard.js'
 import { Markers, MARKER_TYPE } from
     '../node_modules/cm-chessboard/src/extensions/markers/Markers.js'
@@ -16,7 +16,9 @@ export class BoardView {
         this.elementId = elementId
         this.onPieceDrop = options.onPieceDrop || null      // (from, to) => bool
         this.onPiecePickup = options.onPiecePickup || null  // (square) => bool
+        this.onSquareClick = options.onSquareClick || null   // (square) => void
         this.board = null
+        this._squareSelectEnabled = false
     }
 
     async init() {
@@ -41,6 +43,7 @@ export class BoardView {
     }
 
     enableMoveInput() {
+        if (this.board.isMoveInputEnabled()) return
         this.board.enableMoveInput((event) => {
             switch (event.type) {
                 case INPUT_EVENT_TYPE.moveInputStarted:
@@ -63,6 +66,31 @@ export class BoardView {
 
     disableMoveInput() {
         this.board.disableMoveInput()
+    }
+
+    /**
+     * Enable click-on-empty-square detection using cm-chessboard's
+     * built-in enableSquareSelect API. Fires onSquareClick for squares
+     * that have no piece (empty squares the user can place pieces on).
+     */
+    enableSquareSelect() {
+        if (this._squareSelectEnabled) return
+        this._squareSelectEnabled = true
+        this.board.enableSquareSelect(POINTER_EVENTS.pointerdown, (event) => {
+            const square = event.square
+            if (!square) return
+            // Only fire for empty squares (no piece present)
+            const piece = this.board.getPiece(square)
+            if (!piece && this.onSquareClick) {
+                this.onSquareClick(square)
+            }
+        })
+    }
+
+    disableSquareSelect() {
+        if (!this._squareSelectEnabled) return
+        this._squareSelectEnabled = false
+        this.board.disableSquareSelect(POINTER_EVENTS.pointerdown)
     }
 
     addMarker(square, type = MARKER_TYPE.frame) {

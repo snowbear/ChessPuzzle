@@ -73,9 +73,10 @@ body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #eee; }
 
 #thumbnail-container {
     width: 180px;
+    flex-shrink: 0;
 }
 #thumbnail-container h3 { font-size: 0.85rem; margin-bottom: 0.3rem; text-align: center; }
-#thumbnail-board { width: 180px; height: 180px; }
+#thumbnail-board { width: 180px; height: 180px; overflow: hidden; }
 
 .tray-color-section { margin-bottom: 0.75rem; }
 .tray-item {
@@ -91,3 +92,21 @@ body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #eee; }
 .tray-item.exhausted { opacity: 0.3; cursor: default; }
 .tray-piece { font-size: 1.5rem; }
 .tray-count { font-size: 0.75rem; }
+
+/* Phase indicator */
+#phase-indicator {
+    text-align: center;
+    padding: 0.4rem 0.8rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+#phase-indicator.placement {
+    background: #2a4a6b;
+    color: #7ec8e3;
+}
+#phase-indicator.play {
+    background: #2a6b4a;
+    color: #7ee3a5;
+}

@@ -17,6 +17,7 @@ document.getElementById('puzzle-title').textContent = puzzle.metadata.title
 const boardView = new BoardView('main-board', {
     onPiecePickup: handlePiecePickup,
     onPieceDrop: handlePieceDrop,
+    onSquareClick: handleSquareClick,
 })
 await boardView.init()
 
@@ -80,6 +81,30 @@ function handlePiecePickup(square) {
     } else {
         // In play phase: allow normal piece movement
         return true
+    }
+}
+
+/**
+ * Handle clicks on empty squares (for piece placement from tray).
+ * cm-chessboard's move input only fires for squares with pieces;
+ * this handler covers clicking empty open squares during placement.
+ */
+function handleSquareClick(square) {
+    if (!gameState.isAtStartPosition()) return
+    if (!pieceTray.selectedPiece) return
+    if (!puzzle.getOpenSquares().includes(square)) return
+
+    const { color, type } = pieceTray.selectedPiece
+    const typeName = { p: 'pawn', n: 'knight', b: 'bishop', r: 'rook', q: 'queen', k: 'king' }[type]
+    const colorName = color === 'w' ? 'white' : 'black'
+    const constraint = puzzle.getConstraint(colorName, typeName)
+    const counts = gameState.getPlacedPieceCounts()
+    const placed = (counts[colorName] && counts[colorName][typeName]) || 0
+
+    if (placed < constraint.max) {
+        gameState.removePlacedPiece(square)
+        gameState.placePiece(square, { color, type })
+        refreshBoard()
     }
 }
 
@@ -174,6 +199,19 @@ function refreshBoard() {
         boardView.markBlockedSquares(puzzle.getBlockedSquares())
     }
 
+    // Update phase indicator
+    const phaseEl = document.getElementById('phase-indicator')
+    if (gameState.isAtStartPosition()) {
+        phaseEl.className = 'placement'
+        phaseEl.textContent = 'Place pieces on highlighted squares'
+    } else {
+        phaseEl.className = 'play'
+        const remaining = puzzle.halfMoveCount - gameState.moves.filter(m => m.valid).length
+        phaseEl.textContent = remaining > 0
+            ? `Play moves (${remaining} half-move${remaining !== 1 ? 's' : ''} remaining)`
+            : 'All moves played \u2014 submit to check!'
+    }
+
     // Update piece tray
     pieceTray.setEnabled(gameState.isAtStartPosition())
     pieceTray.render()
@@ -181,8 +219,13 @@ function refreshBoard() {
     // Update move history
     moveHistory.render()
 
-    // Enable move input
+    // Enable move input and square selection for placement
     boardView.enableMoveInput()
+    if (gameState.isAtStartPosition()) {
+        boardView.enableSquareSelect()
+    } else {
+        boardView.disableSquareSelect()
+    }
 }
 
 function renderHints() {
