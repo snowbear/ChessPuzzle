@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Puzzle</title>
+    <link rel="stylesheet" href="node_modules/cm-chessboard/assets/chessboard.css"/>
+    <link rel="stylesheet" href="node_modules/cm-chessboard/assets/extensions/markers/markers.css"/>
+    <link rel="stylesheet" href="node_modules/cm-chessboard/assets/extensions/promotion-dialog/promotion-dialog.css"/>
+    <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+    <div id="app">
+        <header id="puzzle-header">
+            <h1 id="puzzle-title">Chess Puzzle</h1>
+        </header>
+        <main id="puzzle-layout">
+            <aside id="piece-tray"></aside>
+            <section id="board-container">
+                <div id="main-board"></div>
+            </section>
+            <aside id="hints-panel">
+                <h2>Hints</h2>
+                <ul id="hints-list"></ul>
+            </aside>
+        </main>
+        <footer id="controls">
+            <div id="move-history"></div>
+            <div id="navigation">
+                <button id="btn-start">&lt;&lt;</button>
+                <button id="btn-back">&lt;</button>
+                <button id="btn-forward">&gt;</button>
+                <button id="btn-end">&gt;&gt;</button>
+                <button id="btn-submit">Submit</button>
+            </div>
+            <div id="thumbnail-container">
+                <h3>Target Position</h3>
+                <div id="thumbnail-board"></div>
+            </div>
+        </footer>
+    </div>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

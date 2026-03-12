@@ -1,0 +1,19 @@
+{
+  "name": "chesspuzzle",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "cm-chessboard": "^8.11.5"
+  }
+}

@@ -1,0 +1,78 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #eee; }
+
+#app { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+
+#puzzle-header { text-align: center; margin-bottom: 1rem; }
+
+#puzzle-layout {
+    display: grid;
+    grid-template-columns: 180px 1fr 220px;
+    gap: 1rem;
+    align-items: start;
+}
+
+#board-container { width: 100%; max-width: 560px; }
+
+#piece-tray {
+    background: #16213e;
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+#piece-tray.disabled { opacity: 0.4; pointer-events: none; }
+
+#hints-panel {
+    background: #16213e;
+    border-radius: 8px;
+    padding: 0.75rem;
+}
+#hints-panel h2 { margin-bottom: 0.5rem; font-size: 1rem; }
+#hints-list { list-style: none; }
+#hints-list li { padding: 0.3rem 0; border-bottom: 1px solid #333; font-size: 0.85rem; }
+#hints-list li.pass { color: #4ecca3; }
+#hints-list li.fail { color: #e94560; }
+
+#controls {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: start;
+}
+
+#move-history {
+    flex: 1;
+    background: #16213e;
+    border-radius: 8px;
+    padding: 0.75rem;
+    min-height: 60px;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+#move-history .move { cursor: pointer; padding: 0.1rem 0.3rem; display: inline-block; }
+#move-history .move:hover { background: #333; border-radius: 3px; }
+#move-history .move.active { background: #4ecca3; color: #000; border-radius: 3px; }
+#move-history .move.invalid { color: #e94560; text-decoration: line-through; }
+
+#navigation { display: flex; gap: 0.5rem; align-items: center; }
+#navigation button {
+    padding: 0.4rem 0.8rem;
+    background: #16213e;
+    color: #eee;
+    border: 1px solid #333;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+#navigation button:hover { background: #333; }
+#btn-submit {
+    background: #4ecca3 !important;
+    color: #000 !important;
+    font-weight: bold;
+}
+
+#thumbnail-container {
+    width: 180px;
+}
+#thumbnail-container h3 { font-size: 0.85rem; margin-bottom: 0.3rem; text-align: center; }
+#thumbnail-board { width: 180px; height: 180px; }
