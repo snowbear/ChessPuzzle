@@ -28,6 +28,12 @@ thumbnail.showRevealedPosition(puzzle.revealedFinalPosition)
 
 // Piece tray
 const pieceTray = new PieceTray('piece-tray', puzzle, gameState)
+pieceTray.onPlayMoves = () => {
+    refreshBoard()
+}
+
+// Flag to prevent handlePiecePickup from undoing a just-placed piece
+let justPlacedSquare = null
 
 // Move history
 const moveHistory = new MoveHistory('move-history', gameState)
@@ -69,23 +75,17 @@ refreshBoard()
 // --- Handlers ---
 
 function handlePiecePickup(square) {
-    if (gameState.isAtStartPosition()) {
-        // If a tray piece is selected, clicking a placed piece removes it
-        if (pieceTray.selectedPiece && gameState.placedPieces[square]) {
-            gameState.removePlacedPiece(square)
-            refreshBoard()
-            return false
-        }
-        // If no tray piece selected, allow normal piece movement (to make moves)
-        if (!pieceTray.selectedPiece) {
-            return true
-        }
-        // Tray piece selected but clicking a revealed piece — ignore
+    // Skip if this pickup was triggered by the same click that just placed a piece
+    if (justPlacedSquare === square) {
+        justPlacedSquare = null
         return false
-    } else {
-        // In play phase: allow normal piece movement
-        return true
     }
+    // In placement mode, don't allow dragging pieces
+    if (gameState.isAtStartPosition() && pieceTray.placementMode) {
+        return false
+    }
+    // In move mode: allow normal piece drag
+    return true
 }
 
 /**
@@ -95,6 +95,7 @@ function handlePiecePickup(square) {
  */
 function handleSquareClick(square) {
     if (!gameState.isAtStartPosition()) return
+    if (!pieceTray.placementMode) return
     if (!pieceTray.selectedPiece) return
     if (!puzzle.getOpenSquares().includes(square)) return
 
@@ -108,12 +109,13 @@ function handleSquareClick(square) {
     if (placed < constraint.max) {
         gameState.removePlacedPiece(square)
         gameState.placePiece(square, { color, type })
+        justPlacedSquare = square
         refreshBoard()
     }
 }
 
 function handlePieceDrop(from, to) {
-    if (gameState.isAtStartPosition() && pieceTray.selectedPiece) {
+    if (gameState.isAtStartPosition() && pieceTray.placementMode && pieceTray.selectedPiece) {
         // Placement mode: place selected tray piece onto open square
         if (puzzle.getOpenSquares().includes(to)) {
             const { color, type } = pieceTray.selectedPiece
@@ -227,9 +229,9 @@ function refreshBoard() {
     // Update move history
     moveHistory.render()
 
-    // Enable move input and square selection for placement
+    // Enable move input and square selection based on mode
     boardView.enableMoveInput()
-    if (gameState.isAtStartPosition()) {
+    if (gameState.isAtStartPosition() && pieceTray.placementMode) {
         boardView.enableSquareSelect()
     } else {
         boardView.disableSquareSelect()

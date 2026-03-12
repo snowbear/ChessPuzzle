@@ -8,12 +8,38 @@ export class PieceTray {
         this.puzzle = puzzle
         this.gameState = gameState
         this.onPieceSelected = null  // callback: (color, type) => void
+        this.onPlayMoves = null      // callback: () => void — user wants to stop placing and start moving
         this.selectedPiece = null    // { color, type } or null (short codes: 'w'/'b', 'p'/'n' etc)
+        this.placementMode = true    // true = placing pieces, false = making moves
         this.enabled = true
     }
 
     render() {
         this.element.innerHTML = ''
+
+        // Mode toggle button (only when enabled = at start position)
+        if (this.enabled) {
+            const modeBtn = document.createElement('button')
+            modeBtn.className = 'tray-mode-btn'
+            if (this.placementMode) {
+                modeBtn.textContent = 'Play Moves'
+                modeBtn.addEventListener('click', () => {
+                    this.placementMode = false
+                    this.selectedPiece = null
+                    if (this.onPlayMoves) this.onPlayMoves()
+                    this.render()
+                })
+            } else {
+                modeBtn.textContent = 'Place Pieces'
+                modeBtn.classList.add('active')
+                modeBtn.addEventListener('click', () => {
+                    this.placementMode = true
+                    this.render()
+                })
+            }
+            this.element.appendChild(modeBtn)
+        }
+
         const colors = ['white', 'black']
         const types = ['king', 'queen', 'rook', 'bishop', 'knight', 'pawn']
         const placedCounts = this.gameState.getPlacedPieceCounts()
@@ -60,14 +86,25 @@ export class PieceTray {
                     <span class="tray-count">${placed}/${constraint.max} (min: ${constraint.min})</span>
                 `
 
-                if (remaining > 0) {
+                if (remaining > 0 && this.placementMode) {
                     item.addEventListener('click', () => {
-                        this.selectedPiece = { color: colorShort, type: typeShort }
+                        // Toggle selection
+                        if (this.selectedPiece &&
+                            this.selectedPiece.color === colorShort &&
+                            this.selectedPiece.type === typeShort) {
+                            this.selectedPiece = null
+                        } else {
+                            this.selectedPiece = { color: colorShort, type: typeShort }
+                        }
                         if (this.onPieceSelected) {
                             this.onPieceSelected(colorShort, typeShort)
                         }
                         this.render()
                     })
+                }
+                if (!this.placementMode) {
+                    item.style.opacity = '0.5'
+                    item.style.cursor = 'default'
                 }
 
                 section.appendChild(item)

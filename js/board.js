@@ -83,12 +83,11 @@ export class BoardView {
             let el = e.target
             let square = null
             while (el && el !== container) {
-                square = el.getAttribute && el.getAttribute('data-square')
-                if (square) break
+                const ds = el.getAttribute && el.getAttribute('data-square')
+                if (ds) { square = ds; break }
                 el = el.parentElement
             }
             if (!square) return
-            // Only fire for empty squares (no piece present)
             const piece = this.board.getPiece(square)
             if (!piece && this.onSquareClick) {
                 this.onSquareClick(square)

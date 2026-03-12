@@ -78,6 +78,24 @@ body { font-family: system-ui, sans-serif; background: #1a1a2e; color: #eee; }
 #thumbnail-container h3 { font-size: 0.85rem; margin-bottom: 0.3rem; text-align: center; }
 #thumbnail-board { width: 180px; height: 180px; overflow: hidden; }
 
+.tray-mode-btn {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 0.75rem;
+    background: #4ecca3;
+    color: #000;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.85rem;
+}
+.tray-mode-btn:hover { opacity: 0.85; }
+.tray-mode-btn.active {
+    background: #16213e;
+    color: #4ecca3;
+    border: 1px solid #4ecca3;
+}
 .tray-color-section { margin-bottom: 0.75rem; }
 .tray-item {
     display: flex;

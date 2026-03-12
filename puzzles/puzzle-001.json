@@ -33,7 +33,7 @@
         {
             "scope": { "halfMove": 2 },
             "constraints": { "piece": "knight", "isCapture": true },
-            "text": "Black recaptures on d5 with a knight"
+            "text": "Black captures on d5 with a knight"
         },
         {
             "scope": { "halfMove": 3 },
