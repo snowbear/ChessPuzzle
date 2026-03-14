@@ -17,9 +17,9 @@ public class OpenSquareConsistencyValidator : IValidator
         foreach (var (square, state) in puzzle.StartPosition.Squares)
         {
             if (state != "open") continue;
-            if (board[square] != null)
-                yield return new ValidationError("OPEN_SQUARE_OCCUPIED",
-                    $"Square {square} is marked open but is occupied in the starting FEN");
+            if (board[square] == null)
+                yield return new ValidationError("OPEN_SQUARE_EMPTY",
+                    $"Square {square} is marked open but is empty in the starting FEN");
         }
     }
 }

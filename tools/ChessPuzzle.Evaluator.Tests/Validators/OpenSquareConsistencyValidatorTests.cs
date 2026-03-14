@@ -8,7 +8,7 @@ public class OpenSquareConsistencyValidatorTests
     private readonly OpenSquareConsistencyValidator _validator = new();
 
     [Fact]
-    public void Validate_OccupiedSquareMarkedOpen_ReturnsError()
+    public void Validate_OccupiedSquareMarkedOpen_ReturnsNoErrors()
     {
         var puzzle = TestHelper.MakeValidPuzzle();
         // a1 has a white rook in the standard starting position
@@ -19,11 +19,11 @@ public class OpenSquareConsistencyValidatorTests
 
         var errors = _validator.Validate(puzzle).ToList();
 
-        Assert.Contains(errors, e => e.Code == "OPEN_SQUARE_OCCUPIED");
+        Assert.Empty(errors);
     }
 
     [Fact]
-    public void Validate_EmptySquareMarkedOpen_ReturnsNoErrors()
+    public void Validate_EmptySquareMarkedOpen_ReturnsError()
     {
         var puzzle = TestHelper.MakeValidPuzzle();
         // e4 is empty in the standard starting position
@@ -34,11 +34,11 @@ public class OpenSquareConsistencyValidatorTests
 
         var errors = _validator.Validate(puzzle).ToList();
 
-        Assert.Empty(errors);
+        Assert.Contains(errors, e => e.Code == "OPEN_SQUARE_EMPTY");
     }
 
     [Fact]
-    public void Validate_EmptySquareNotMarkedOpen_ReturnsNoErrors()
+    public void Validate_NoSquaresMarkedOpen_ReturnsNoErrors()
     {
         var puzzle = TestHelper.MakeValidPuzzle();
         // No squares marked open at all
