@@ -11,54 +11,34 @@ public static class SolutionSpaceExplorer
 
         try
         {
+            // Pre-parse the revealed final position for fast comparison
+            string? revealedPlacement = null;
+            if (!string.IsNullOrEmpty(puzzle.RevealedFinalPosition))
+                revealedPlacement = puzzle.RevealedFinalPosition.Split(' ')[0];
+
             var placements = EnumeratePlacements(puzzle);
-            foreach (var placement in placements)
+
+            if (placements.Count > 0)
             {
-                string fen = ApplyPlacementToFen(puzzle.StartPosition.Fen, placement);
-
-                if (!ChessBoard.TryLoadFromFen(fen, out var board))
-                    continue;
-
-                var sequences = new List<List<Move>>();
-                EnumerateMoveSequences(board, puzzle.HalfMoveCount, new List<Move>(), sequences);
-                result.SearchSpaceSize += sequences.Count;
-
-                foreach (var sequence in sequences)
+                foreach (var placement in placements)
                 {
-                    if (ValidateSolution(fen, sequence, puzzle))
-                    {
-                        var solution = new Solution
-                        {
-                            Placement = new Dictionary<string, string>(placement),
-                            Moves = sequence.Select(m => m.San ?? m.ToString()).ToList()
-                        };
-                        result.Solutions.Add(solution);
-                    }
+                    string fen = ApplyPlacementToFen(puzzle.StartPosition.Fen, placement);
+
+                    if (!ChessBoard.TryLoadFromFen(fen, out var board))
+                        continue;
+
+                    SearchMoveTree(board, puzzle, revealedPlacement, placement, puzzle.HalfMoveCount,
+                        new List<Move>(), result);
                 }
             }
-
-            // If no placements (no open squares / no constraints), search from the starting position directly
-            if (!placements.Any())
+            else
             {
+                // No placements needed — search from starting position directly
                 if (!ChessBoard.TryLoadFromFen(puzzle.StartPosition.Fen, out var board))
                     return result;
 
-                var sequences = new List<List<Move>>();
-                EnumerateMoveSequences(board, puzzle.HalfMoveCount, new List<Move>(), sequences);
-                result.SearchSpaceSize += sequences.Count;
-
-                foreach (var sequence in sequences)
-                {
-                    if (ValidateSolution(puzzle.StartPosition.Fen, sequence, puzzle))
-                    {
-                        var solution = new Solution
-                        {
-                            Placement = new Dictionary<string, string>(),
-                            Moves = sequence.Select(m => m.San ?? m.ToString()).ToList()
-                        };
-                        result.Solutions.Add(solution);
-                    }
-                }
+                SearchMoveTree(board, puzzle, revealedPlacement, new Dictionary<string, string>(),
+                    puzzle.HalfMoveCount, new List<Move>(), result);
             }
 
             result.SolutionCount = result.Solutions.Count;
@@ -69,6 +49,69 @@ public static class SolutionSpaceExplorer
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// DFS through the move tree. At leaf nodes, validates the position inline
+    /// using the board state that's already built up — no replay needed.
+    /// </summary>
+    private static void SearchMoveTree(
+        ChessBoard board,
+        Puzzle puzzle,
+        string? revealedPlacement,
+        Dictionary<string, string> placement,
+        int remainingDepth,
+        List<Move> movesSoFar,
+        ExplorationResult result)
+    {
+        if (remainingDepth == 0)
+        {
+            result.SearchSpaceSize++;
+
+            // Validate final position directly from the current board state
+            if (revealedPlacement != null)
+            {
+                var actualPlacement = board.ToFen().Split(' ')[0];
+                if (actualPlacement != revealedPlacement)
+                    return;
+            }
+
+            // Validate all hints against the moves we've accumulated
+            foreach (var hint in puzzle.Hints)
+            {
+                if (!CheckHint(hint, movesSoFar, board))
+                    return;
+            }
+
+            // Valid solution found
+            result.Solutions.Add(new Solution
+            {
+                Placement = new Dictionary<string, string>(placement),
+                Moves = movesSoFar.Select(m => m.San ?? m.ToString()).ToList()
+            });
+            return;
+        }
+
+        if (board.IsEndGame)
+            return;
+
+        var moves = board.Moves(generateSan: true);
+        foreach (var move in moves)
+        {
+            try
+            {
+                board.Move(move);
+                movesSoFar.Add(move);
+                SearchMoveTree(board, puzzle, revealedPlacement, placement, remainingDepth - 1,
+                    movesSoFar, result);
+                movesSoFar.RemoveAt(movesSoFar.Count - 1);
+                board.Cancel();
+            }
+            catch
+            {
+                // If move fails for any reason, skip it
+            }
+        }
     }
 
     // --- Phase 1: Enumerate Placements ---
@@ -242,105 +285,6 @@ public static class SolutionSpaceExplorer
             current.RemoveAt(current.Count - 1);
             used[i] = false;
         }
-    }
-
-    // --- Phase 2: Enumerate Move Sequences ---
-
-    private static void EnumerateMoveSequences(ChessBoard board, int depth, List<Move> current, List<List<Move>> results)
-    {
-        if (depth == 0)
-        {
-            results.Add(new List<Move>(current));
-            return;
-        }
-
-        if (board.IsEndGame)
-            return; // Can't make more moves
-
-        var moves = board.Moves(generateSan: true);
-        foreach (var move in moves)
-        {
-            try
-            {
-                board.Move(move);
-                current.Add(move);
-                EnumerateMoveSequences(board, depth - 1, current, results);
-                current.RemoveAt(current.Count - 1);
-                board.Cancel();
-            }
-            catch
-            {
-                // If move fails for any reason, skip it
-            }
-        }
-    }
-
-    // --- Phase 3: Validate ---
-
-    private static bool ValidateSolution(string startFen, List<Move> moves, Puzzle puzzle)
-    {
-        // Replay the moves on a fresh board to get the final position
-        if (!ChessBoard.TryLoadFromFen(startFen, out var board))
-            return false;
-
-        var executedMoves = new List<Move>();
-        foreach (var move in moves)
-        {
-            try
-            {
-                // We need to find the matching move from the board's legal moves
-                var legalMoves = board.Moves(generateSan: true);
-                var matchingMove = legalMoves.FirstOrDefault(m =>
-                    m.OriginalPosition == move.OriginalPosition &&
-                    m.NewPosition == move.NewPosition &&
-                    PromotionMatches(m, move));
-
-                if (matchingMove == null)
-                    return false;
-
-                board.Move(matchingMove);
-                executedMoves.Add(matchingMove);
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        // Check revealed final position
-        if (!string.IsNullOrEmpty(puzzle.RevealedFinalPosition))
-        {
-            if (!CheckRevealedFinalPosition(board, puzzle.RevealedFinalPosition))
-                return false;
-        }
-
-        // Check all hints
-        foreach (var hint in puzzle.Hints)
-        {
-            if (!CheckHint(hint, executedMoves, board))
-                return false;
-        }
-
-        return true;
-    }
-
-    private static bool PromotionMatches(Move a, Move b)
-    {
-        if (!a.IsPromotion && !b.IsPromotion) return true;
-        if (a.IsPromotion != b.IsPromotion) return false;
-        if (a.Promotion == null && b.Promotion == null) return true;
-        if (a.Promotion == null || b.Promotion == null) return false;
-        return a.Promotion.Type == b.Promotion.Type;
-    }
-
-    private static bool CheckRevealedFinalPosition(ChessBoard board, string revealedFen)
-    {
-        // Compare the piece placement (first field of FEN)
-        var actualFen = board.ToFen();
-        var actualPlacement = actualFen.Split(' ')[0];
-        var revealedPlacement = revealedFen.Split(' ')[0];
-
-        return actualPlacement == revealedPlacement;
     }
 
     private static bool CheckHint(Hint hint, List<Move> executedMoves, ChessBoard finalBoard)
