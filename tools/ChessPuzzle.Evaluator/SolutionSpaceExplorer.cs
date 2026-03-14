@@ -11,10 +11,10 @@ public static class SolutionSpaceExplorer
 
         try
         {
-            // Pre-parse the revealed final position for fast comparison
-            string? revealedPlacement = null;
+            // Pre-parse the revealed final position into a sparse map of occupied squares
+            Dictionary<int, char>? revealedSquares = null;
             if (!string.IsNullOrEmpty(puzzle.RevealedFinalPosition))
-                revealedPlacement = puzzle.RevealedFinalPosition.Split(' ')[0];
+                revealedSquares = ParseRevealedSquares(puzzle.RevealedFinalPosition);
 
             var placements = EnumeratePlacements(puzzle);
 
@@ -27,7 +27,7 @@ public static class SolutionSpaceExplorer
                     if (!ChessBoard.TryLoadFromFen(fen, out var board))
                         continue;
 
-                    SearchMoveTree(board, puzzle, revealedPlacement, placement, puzzle.HalfMoveCount,
+                    SearchMoveTree(board, puzzle, revealedSquares, placement, puzzle.HalfMoveCount,
                         new List<Move>(), result);
                 }
             }
@@ -37,7 +37,7 @@ public static class SolutionSpaceExplorer
                 if (!ChessBoard.TryLoadFromFen(puzzle.StartPosition.Fen, out var board))
                     return result;
 
-                SearchMoveTree(board, puzzle, revealedPlacement, new Dictionary<string, string>(),
+                SearchMoveTree(board, puzzle, revealedSquares, new Dictionary<string, string>(),
                     puzzle.HalfMoveCount, new List<Move>(), result);
             }
 
@@ -58,7 +58,7 @@ public static class SolutionSpaceExplorer
     private static void SearchMoveTree(
         ChessBoard board,
         Puzzle puzzle,
-        string? revealedPlacement,
+        Dictionary<int, char>? revealedSquares,
         Dictionary<string, string> placement,
         int remainingDepth,
         List<Move> movesSoFar,
@@ -68,12 +68,16 @@ public static class SolutionSpaceExplorer
         {
             result.SearchSpaceSize++;
 
-            // Validate final position directly from the current board state
-            if (revealedPlacement != null)
+            // Validate final position — only check squares that are revealed (have pieces)
+            if (revealedSquares != null)
             {
-                var actualPlacement = board.ToFen().Split(' ')[0];
-                if (actualPlacement != revealedPlacement)
-                    return;
+                var actualFenBoard = board.ToFen().Split(' ')[0];
+                var actualExpanded = ExpandFenBoard(actualFenBoard);
+                foreach (var (index, expectedChar) in revealedSquares)
+                {
+                    if (actualExpanded[index] != expectedChar)
+                        return;
+                }
             }
 
             // Validate all hints against the moves we've accumulated
@@ -102,7 +106,7 @@ public static class SolutionSpaceExplorer
             {
                 board.Move(move);
                 movesSoFar.Add(move);
-                SearchMoveTree(board, puzzle, revealedPlacement, placement, remainingDepth - 1,
+                SearchMoveTree(board, puzzle, revealedSquares, placement, remainingDepth - 1,
                     movesSoFar, result);
                 movesSoFar.RemoveAt(movesSoFar.Count - 1);
                 board.Cancel();
@@ -526,6 +530,57 @@ public static class SolutionSpaceExplorer
             "king" => PieceType.King,
             _ => null
         };
+    }
+
+    /// <summary>
+    /// Parse a revealed FEN into a sparse map: board index (0-63) → expected piece char.
+    /// Only occupied squares are included — empty squares are "unknown" (don't care).
+    /// Index 0 = a8, index 63 = h1 (FEN order: rank 8 first, left to right).
+    /// </summary>
+    private static Dictionary<int, char> ParseRevealedSquares(string revealedFen)
+    {
+        var result = new Dictionary<int, char>();
+        var boardPart = revealedFen.Split(' ')[0];
+        int index = 0;
+        foreach (char c in boardPart)
+        {
+            if (c == '/') continue;
+            if (char.IsDigit(c))
+            {
+                index += c - '0'; // skip empty squares
+            }
+            else
+            {
+                result[index] = c;
+                index++;
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Expand FEN board part into 64-char array for fast indexed lookup.
+    /// Index 0 = a8, index 63 = h1.
+    /// </summary>
+    private static char[] ExpandFenBoard(string boardPart)
+    {
+        var result = new char[64];
+        int index = 0;
+        foreach (char c in boardPart)
+        {
+            if (c == '/') continue;
+            if (char.IsDigit(c))
+            {
+                int count = c - '0';
+                for (int i = 0; i < count; i++)
+                    result[index++] = '.';
+            }
+            else
+            {
+                result[index++] = c;
+            }
+        }
+        return result;
     }
 
     // --- FEN manipulation ---
