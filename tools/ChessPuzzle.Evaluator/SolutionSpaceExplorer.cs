@@ -102,19 +102,12 @@ public static class SolutionSpaceExplorer
         var moves = board.Moves(generateSan: true);
         foreach (var move in moves)
         {
-            try
-            {
-                board.Move(move);
-                movesSoFar.Add(move);
-                SearchMoveTree(board, puzzle, revealedSquares, placement, remainingDepth - 1,
-                    movesSoFar, result);
-                movesSoFar.RemoveAt(movesSoFar.Count - 1);
-                board.Cancel();
-            }
-            catch
-            {
-                // If move fails for any reason, skip it
-            }
+            board.Move(move);
+            movesSoFar.Add(move);
+            SearchMoveTree(board, puzzle, revealedSquares, placement, remainingDepth - 1,
+                movesSoFar, result);
+            movesSoFar.RemoveAt(movesSoFar.Count - 1);
+            board.Cancel();
         }
     }
 
