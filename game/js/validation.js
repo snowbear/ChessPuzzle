@@ -11,6 +11,31 @@ import { evaluateAllHints } from './hints.js'
  *   positionMismatches: [square]
  * }
  */
+const PIECE_MAP = {
+    'p': { color: 'b', type: 'p' }, 'n': { color: 'b', type: 'n' },
+    'b': { color: 'b', type: 'b' }, 'r': { color: 'b', type: 'r' },
+    'q': { color: 'b', type: 'q' }, 'k': { color: 'b', type: 'k' },
+    'P': { color: 'w', type: 'p' }, 'N': { color: 'w', type: 'n' },
+    'B': { color: 'w', type: 'b' }, 'R': { color: 'w', type: 'r' },
+    'Q': { color: 'w', type: 'q' }, 'K': { color: 'w', type: 'k' },
+}
+
+function parseRevealedSquares(fen) {
+    const board = fen.split(' ')[0]
+    const result = []
+    let index = 0
+    for (const ch of board) {
+        if (ch === '/') continue
+        if (ch >= '1' && ch <= '8') { index += parseInt(ch); continue }
+        const file = String.fromCharCode('a'.charCodeAt(0) + (index % 8))
+        const rank = 8 - Math.floor(index / 8)
+        const piece = PIECE_MAP[ch]
+        if (piece) result.push({ square: file + rank, color: piece.color, type: piece.type })
+        index++
+    }
+    return result
+}
+
 export function validateSolution(gameState) {
     const puzzle = gameState.puzzle
     const baseFen = gameState.chess.fen()
@@ -30,18 +55,12 @@ export function validateSolution(gameState) {
 
     const positionMismatches = []
     if (puzzle.revealedFinalPosition) {
-        const revealedChess = new Chess()
-        revealedChess.load(puzzle.revealedFinalPosition)
+        const revealed = parseRevealedSquares(puzzle.revealedFinalPosition)
         const files = 'abcdefgh'
-        for (let r = 1; r <= 8; r++) {
-            for (const f of files) {
-                const sq = f + r
-                const expected = revealedChess.get(sq)
-                if (!expected) continue
-                const actual = finalChess.get(sq)
-                if (!actual || actual.color !== expected.color || actual.type !== expected.type) {
-                    positionMismatches.push(sq)
-                }
+        for (const { square, color, type } of revealed) {
+            const actual = finalChess.get(square)
+            if (!actual || actual.color !== color || actual.type !== type) {
+                positionMismatches.push(square)
             }
         }
     }
