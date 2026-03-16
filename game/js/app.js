@@ -7,7 +7,9 @@ import { validateSolution } from './validation.js'
 
 // --- Init ---
 
-const puzzle = await loadPuzzle('puzzles/puzzle-002.json')
+const params = new URLSearchParams(window.location.search)
+const puzzleId = params.get('puzzle') ?? 'puzzle-002'
+const puzzle = await loadPuzzle(`puzzles/${puzzleId}.json`)
 const gameState = new GameState(puzzle)
 
 // Update page title
