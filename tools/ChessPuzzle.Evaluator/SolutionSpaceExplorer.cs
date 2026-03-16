@@ -11,8 +11,8 @@ public static class SolutionSpaceExplorer
 
         try
         {
-            // Pre-parse the revealed final position into a sparse map of occupied squares
-            Dictionary<int, char>? revealedSquares = null;
+            // Pre-parse the revealed final position into square-name → expected piece char pairs
+            (string square, char expected)[]? revealedSquares = null;
             if (!string.IsNullOrEmpty(puzzle.RevealedFinalPosition))
                 revealedSquares = ParseRevealedSquares(puzzle.RevealedFinalPosition);
 
@@ -58,7 +58,7 @@ public static class SolutionSpaceExplorer
     private static void SearchMoveTree(
         ChessBoard board,
         Puzzle puzzle,
-        Dictionary<int, char>? revealedSquares,
+        (string square, char expected)[]? revealedSquares,
         Dictionary<string, string> placement,
         int remainingDepth,
         List<Move> movesSoFar,
@@ -68,14 +68,13 @@ public static class SolutionSpaceExplorer
         {
             result.SearchSpaceSize++;
 
-            // Validate final position — only check squares that are revealed (have pieces)
+            // Validate final position — directly check each revealed square on the board
             if (revealedSquares != null)
             {
-                var actualFenBoard = board.ToFen().Split(' ')[0];
-                var actualExpanded = ExpandFenBoard(actualFenBoard);
-                foreach (var (index, expectedChar) in revealedSquares)
+                foreach (var (square, expected) in revealedSquares)
                 {
-                    if (actualExpanded[index] != expectedChar)
+                    var piece = board[square];
+                    if (piece == null || piece.ToFenChar() != expected)
                         return;
                 }
             }
@@ -87,11 +86,11 @@ public static class SolutionSpaceExplorer
                     return;
             }
 
-            // Valid solution found
+            // Valid solution found — format moves as "piece from→to" (SAN not available without generation)
             result.Solutions.Add(new Solution
             {
                 Placement = new Dictionary<string, string>(placement),
-                Moves = movesSoFar.Select(m => m.San ?? m.ToString()).ToList()
+                Moves = movesSoFar.Select(FormatMove).ToList()
             });
             return;
         }
@@ -99,7 +98,7 @@ public static class SolutionSpaceExplorer
         if (board.IsEndGame)
             return;
 
-        var moves = board.Moves(generateSan: true);
+        var moves = board.Moves(generateSan: false);
         foreach (var move in moves)
         {
             board.Move(move);
@@ -511,6 +510,29 @@ public static class SolutionSpaceExplorer
         return true;
     }
 
+    /// <summary>
+    /// Format a move in a human-readable way without requiring SAN generation.
+    /// Uses the piece type letter + destination square (e.g., "Nd5", "e4", "O-O").
+    /// </summary>
+    private static string FormatMove(Move move)
+    {
+        if (move.IsCastling)
+            return move.NewPosition.X == 6 ? "O-O" : "O-O-O";
+
+        char pieceChar = move.Piece.Type.AsChar;
+        string dest = move.NewPosition.ToString();
+        string capture = move.CapturedPiece != null ? "x" : "";
+
+        if (move.Piece.Type == PieceType.Pawn)
+        {
+            if (move.CapturedPiece != null)
+                return $"{move.OriginalPosition.File()}x{dest}";
+            return dest;
+        }
+
+        return $"{char.ToUpper(pieceChar)}{capture}{dest}";
+    }
+
     private static PieceType? ParsePieceType(string name)
     {
         return name.ToLowerInvariant() switch
@@ -526,15 +548,15 @@ public static class SolutionSpaceExplorer
     }
 
     /// <summary>
-    /// Parse a revealed FEN into a sparse map: board index (0-63) → expected piece char.
+    /// Parse a revealed FEN into an array of (squareName, expectedFenChar) pairs.
     /// Only occupied squares are included — empty squares are "unknown" (don't care).
-    /// Index 0 = a8, index 63 = h1 (FEN order: rank 8 first, left to right).
+    /// Square names use algebraic notation (e.g., "a8", "e4").
     /// </summary>
-    private static Dictionary<int, char> ParseRevealedSquares(string revealedFen)
+    private static (string square, char expected)[] ParseRevealedSquares(string revealedFen)
     {
-        var result = new Dictionary<int, char>();
+        var result = new List<(string, char)>();
         var boardPart = revealedFen.Split(' ')[0];
-        int index = 0;
+        int index = 0; // 0-63, FEN order: 0=a8, 63=h1
         foreach (char c in boardPart)
         {
             if (c == '/') continue;
@@ -544,36 +566,14 @@ public static class SolutionSpaceExplorer
             }
             else
             {
-                result[index] = c;
+                int file = index % 8;       // 0=a, 7=h
+                int rank = 8 - (index / 8); // 8 down to 1
+                string square = $"{(char)('a' + file)}{rank}";
+                result.Add((square, c));
                 index++;
             }
         }
-        return result;
-    }
-
-    /// <summary>
-    /// Expand FEN board part into 64-char array for fast indexed lookup.
-    /// Index 0 = a8, index 63 = h1.
-    /// </summary>
-    private static char[] ExpandFenBoard(string boardPart)
-    {
-        var result = new char[64];
-        int index = 0;
-        foreach (char c in boardPart)
-        {
-            if (c == '/') continue;
-            if (char.IsDigit(c))
-            {
-                int count = c - '0';
-                for (int i = 0; i < count; i++)
-                    result[index++] = '.';
-            }
-            else
-            {
-                result[index++] = c;
-            }
-        }
-        return result;
+        return result.ToArray();
     }
 
     // --- FEN manipulation ---
